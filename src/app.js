@@ -2,7 +2,7 @@ const express = require('express');
 const connectDB = require('./config/database');
 
 const app = express();
-const User = require('./models/user')
+const User = require('./models/user');
 
 // middleware to convert to json by express
 app.use(express.json())
@@ -51,8 +51,9 @@ app.patch('/user' , async(req, res) => {
     const userId = req.body.userId
     const Data = req.body
     try {
-        const data = await User.findByIdAndUpdate(userId, Data)
-        console.log('@@@', data)
+        const data = await User.findByIdAndUpdate(userId, Data, {
+            runValidators: true
+        })
         res.send('data after updation')
     } catch {
         res.status(400).send('error connecting to database' + err?.message)
@@ -60,7 +61,6 @@ app.patch('/user' , async(req, res) => {
 })
 
 connectDB().then(() => {
-    console.log('database is connected')
     app.listen(7777, () => {
         console.log('server is running successfully')
     })
