@@ -47,16 +47,20 @@ app.delete('/user' , async(req, res) => {
     }
 })
 
-app.patch('/user' , async(req, res) => {
-    const userId = req.body.userId
+app.patch('/user/:userId' , async(req, res) => {
+    const userId = req.params?.userId
     const Data = req.body
     try {
-        const data = await User.findByIdAndUpdate(userId, Data, {
+        const notToBeUpdatedKeys = ['emailId', 'password'];
+        if(Object.keys(Data).every(ele => notToBeUpdatedKeys.includes(ele))) {
+            res.status(400).send('This data cannot be updates')
+        }
+        const data = await User.findByIdAndUpdate({_id: userId}, Data, {
             runValidators: true
         })
         res.send('data after updation')
     } catch {
-        res.status(400).send('error connecting to database' + err?.message)
+        res.status(400).send('error connecting to database')
     }
 })
 
