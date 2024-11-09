@@ -4,17 +4,52 @@ const connectDB = require('./config/database');
 const app = express();
 const User = require('./models/user');
 
+const ValidateSignUpDetails = require('./utils/validateSignUpDetails')
+const bcrypt = require('bcrypt');
+
 // middleware to convert to json by express
 app.use(express.json())
 
+const saltRounds = 10;
+
 app.post('/signup', async (req, res) => {
-    const user = new User(req.body)
+
     try {
+
+        const {firstName, lastName, emailId, password} = req.body
+        ValidateSignUpDetails(req.body)
+        const passwordHash = await bcrypt.hash(password, saltRounds)
+
+        const user = new User({
+            firstName,
+            lastName,
+            emailId,
+            password: passwordHash
+        })
         await user.save()
         res.send('data is saved')
     }
     catch (err){
-        res.status(400).send('error connecting to database' + err?.message)
+        res.status(400).send('Error' + err?.message)
+    }
+})
+
+app.post('/login', async (req,res) => {
+    try {
+        const {emailId, password} = req.body
+
+        const user = await User.findOne({emailId: emailId})
+        if(!user) {
+            throw new Error('User Not found')
+        } 
+        let correctPassword = bcrypt.compare(password, user.password);
+        if (correctPassword) {
+          res.send("user login is successfull");
+        } else {
+          throw new Error("Password is not correct");
+        }
+    } catch (err) {
+        res.status(400).send('Error:' + err?.message)
     }
 })
 
