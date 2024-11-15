@@ -7,8 +7,13 @@ const User = require('./models/user');
 const ValidateSignUpDetails = require('./utils/validateSignUpDetails')
 const bcrypt = require('bcrypt');
 
+const cookieParser = require('cookie-parser')
+
 // middleware to convert to json by express
 app.use(express.json())
+app.use(cookieParser())
+
+const userAuth = require('./middlewares/userAuth')
 
 const saltRounds = 10;
 
@@ -34,22 +39,45 @@ app.post('/signup', async (req, res) => {
     }
 })
 
-app.post('/login', async (req,res) => {
-    try {
-        const {emailId, password} = req.body
+app.post("/login", async (req, res) => {
+  try {
+    const { emailId, password } = req.body;
 
-        const user = await User.findOne({emailId: emailId})
-        if(!user) {
-            throw new Error('User Not found')
-        } 
-        let correctPassword = bcrypt.compare(password, user.password);
-        if (correctPassword) {
-          res.send("user login is successfull");
-        } else {
-          throw new Error("Password is not correct");
-        }
-    } catch (err) {
-        res.status(400).send('Error:' + err?.message)
+    const user = await User.findOne({ emailId: emailId });
+    if (!user) {
+      throw new Error("User Not found");
+    }
+
+    let correctPassword = await user.validatePassword(password)
+    if (correctPassword) {
+      // set token  
+      let token = await user.getJWT();
+      res.cookie("token", token);
+      res.send("user login is successfull");
+    } else {
+      throw new Error("Password is not correct");
+    }
+  } catch (err) {
+    res.status(400).send("Error:" + err?.message);
+  }
+});
+
+app.get("/profile",userAuth, async(req, res) => {
+
+    try {
+        const user = req.user
+        res.send(user)
+    } catch(err) {
+        res.status(400).send("Error" + err?.message)
+    }
+})
+
+app.post("/sentConnectionRequest", userAuth, async(req, res) => {
+    try {
+        const user = req.user
+        res.send(user.firstName + " " + "sent the request");
+    } catch(err){
+        res.status(400).send('Cannot send connection request')
     }
 })
 
