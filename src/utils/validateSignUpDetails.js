@@ -12,4 +12,19 @@ const ValidateSignUpDetails = (req) => {
     }
 }
 
-module.exports = ValidateSignUpDetails
+const validateProfileResponse = (req) => {
+    const userKeysUpdateAllowed = [
+        "firstName",
+        "lastName",
+        "age",
+        "gender",
+        "photoUrl",
+        "about",
+        "skills",
+    ]
+
+   const isValidKey = Object.keys(req).every(Field => userKeysUpdateAllowed.includes(Field))
+   return isValidKey
+}
+
+module.exports = {ValidateSignUpDetails, validateProfileResponse}
