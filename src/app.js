@@ -2,10 +2,6 @@ const express = require('express');
 const connectDB = require('./config/database');
 
 const app = express();
-const User = require('./models/user');
-
-const ValidateSignUpDetails = require('./utils/validateSignUpDetails')
-const bcrypt = require('bcrypt');
 
 const cookieParser = require('cookie-parser')
 
@@ -13,119 +9,61 @@ const cookieParser = require('cookie-parser')
 app.use(express.json())
 app.use(cookieParser())
 
-const userAuth = require('./middlewares/userAuth')
 
-const saltRounds = 10;
+const authRouter = require('./routes/auth')
+const profileRouter = require('./routes/profile')
+const requestRouter = require('./routes/request')
 
-app.post('/signup', async (req, res) => {
+app.use('/', authRouter)
+app.use('/', profileRouter)
+app.use('/', requestRouter)
 
-    try {
 
-        const {firstName, lastName, emailId, password} = req.body
-        ValidateSignUpDetails(req.body)
-        const passwordHash = await bcrypt.hash(password, saltRounds)
+// app.get('/user', async(req, res) => {
+//     const email = req.body.emailId
+//     try {
+//         const data = await User.find({emailId: email})
+//         res.send('data is found by email')
+//     } catch (err){
+//         res.status(400).send('error connecting to database' + err?.message)
+//     }
+// })
 
-        const user = new User({
-            firstName,
-            lastName,
-            emailId,
-            password: passwordHash
-        })
-        await user.save()
-        res.send('data is saved')
-    }
-    catch (err){
-        res.status(400).send('Error' + err?.message)
-    }
-})
+// app.get('/feed', async(req, res) => {
+//     try {
+//         const data = await User.find({})
+//         res.send('all feed data is shown')
+//     } catch (err){
+//         res.status(400).send('error connecting to database' + err?.message)
+//     }
+// })
 
-app.post("/login", async (req, res) => {
-  try {
-    const { emailId, password } = req.body;
+// app.delete('/user' , async(req, res) => {
+//     const userId = req.body.userId
+//     try {
+//         const data = await User.findByIdAndDelete(userId)
+//         res.send('data after deletion')
+//     } catch {
+//         res.status(400).send('error connecting to database' + err?.message)
+//     }
+// })
 
-    const user = await User.findOne({ emailId: emailId });
-    if (!user) {
-      throw new Error("User Not found");
-    }
-
-    let correctPassword = await user.validatePassword(password)
-    if (correctPassword) {
-      // set token  
-      let token = await user.getJWT();
-      res.cookie("token", token);
-      res.send("user login is successfull");
-    } else {
-      throw new Error("Password is not correct");
-    }
-  } catch (err) {
-    res.status(400).send("Error:" + err?.message);
-  }
-});
-
-app.get("/profile",userAuth, async(req, res) => {
-
-    try {
-        const user = req.user
-        res.send(user)
-    } catch(err) {
-        res.status(400).send("Error" + err?.message)
-    }
-})
-
-app.post("/sentConnectionRequest", userAuth, async(req, res) => {
-    try {
-        const user = req.user
-        res.send(user.firstName + " " + "sent the request");
-    } catch(err){
-        res.status(400).send('Cannot send connection request')
-    }
-})
-
-app.get('/user', async(req, res) => {
-    const email = req.body.emailId
-    try {
-        const data = await User.find({emailId: email})
-        res.send('data is found by email')
-    } catch (err){
-        res.status(400).send('error connecting to database' + err?.message)
-    }
-})
-
-app.get('/feed', async(req, res) => {
-    try {
-        const data = await User.find({})
-        res.send('all feed data is shown')
-    } catch (err){
-        res.status(400).send('error connecting to database' + err?.message)
-    }
-})
-
-app.delete('/user' , async(req, res) => {
-    const userId = req.body.userId
-    try {
-        const data = await User.findByIdAndDelete(userId)
-        res.send('data after deletion')
-    } catch {
-        res.status(400).send('error connecting to database' + err?.message)
-    }
-})
-
-app.patch('/user/:userId' , async(req, res) => {
-    const userId = req.params?.userId
-    const Data = req.body
-    try {
-        const notToBeUpdatedKeys = ['emailId', 'password'];
-        if(Object.keys(Data).every(ele => notToBeUpdatedKeys.includes(ele))) {
-            res.status(400).send('This data cannot be updates')
-        }
-        const data = await User.findByIdAndUpdate({_id: userId}, Data, {
-            runValidators: true
-        })
-        res.send('data after updation')
-    } catch {
-        res.status(400).send('error connecting to database')
-    }
-})
+// app.patch('/user/:userId' , async(req, res) => {
+//     const userId = req.params?.userId
+//     const Data = req.body
+//     try {
+//         const notToBeUpdatedKeys = ['emailId', 'password'];
+//         if(Object.keys(Data).every(ele => notToBeUpdatedKeys.includes(ele))) {
+//             res.status(400).send('This data cannot be updates')
+//         }
+//         const data = await User.findByIdAndUpdate({_id: userId}, Data, {
+//             runValidators: true
+//         })
+//         res.send('data after updation')
+//     } catch {
+//         res.status(400).send('error connecting to database')
+//     }
+// })
 
 connectDB().then(() => {
     app.listen(7777, () => {
