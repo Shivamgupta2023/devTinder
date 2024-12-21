@@ -1,5 +1,5 @@
 const express = require('express')
-const ValidateSignUpDetails = require('../utils/validateSignUpDetails')
+const {ValidateSignUpDetails} = require('../utils/validateSignUpDetails')
 
 const bcrypt = require('bcrypt');
 const User = require('../models/user');
