@@ -61,7 +61,6 @@ requestRouter.post('/request/review/:status/:requestId',
     async(req, res) => {
 
         try {
-
             const loginUser = req.user
             const {requestId, status} = req.params
     
@@ -73,7 +72,7 @@ requestRouter.post('/request/review/:status/:requestId',
             }
     
             const connectionRequest = await ConnectionRequest.findOne({
-                _id: requestId,
+                fromUserId: requestId,
                 toUserId: loginUser._id,
                 status: "interested"
     
